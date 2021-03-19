@@ -1,1 +1,1 @@
-# connect-cour
+# Connect Four
