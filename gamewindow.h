@@ -2,6 +2,10 @@
 #define GAMEWINDOW_H
 
 #include <QMainWindow>
+#include <QtCore>
+#include <QtGui>
+#include <QGraphicsScene>
+#include <QGraphicsEllipseItem>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class GameWindow; }
@@ -17,5 +21,7 @@ public:
 
 private:
     Ui::GameWindow *ui;
+    QGraphicsScene *gameScene;
+    QGraphicsEllipseItem *ellipse;
 };
 #endif // GAMEWINDOW_H
