@@ -5,14 +5,12 @@
 #include <QtCore>
 #include <QtGui>
 #include <QGraphicsScene>
-#include <QGraphicsEllipseItem>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class GameWindow; }
 QT_END_NAMESPACE
 
-class GameWindow : public QMainWindow
-{
+class GameWindow : public QMainWindow {
     Q_OBJECT
 
 public:
@@ -22,6 +20,7 @@ public:
 private:
     Ui::GameWindow *ui;
     QGraphicsScene *gameScene;
-    QGraphicsEllipseItem *ellipse;
+    QTimer *timer;
 };
+
 #endif // GAMEWINDOW_H
