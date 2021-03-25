@@ -2,9 +2,10 @@
 #define GAMEWINDOW_H
 
 #include <QMainWindow>
-#include <QtCore>
-#include <QtGui>
-#include <QGraphicsScene>
+#include <QTimer>
+#include <QDebug>
+
+#include <gamescene.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class GameWindow; }
@@ -19,8 +20,10 @@ public:
 
 private:
     Ui::GameWindow *ui;
-    QGraphicsScene *gameScene;
     QTimer *timer;
-};
+    GameScene *scene;
 
+private slots:
+    void slotTimer(void);
+};
 #endif // GAMEWINDOW_H
