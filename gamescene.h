@@ -23,11 +23,14 @@ public:
 private:
     int board_[BOARD_ROWS][BOARD_COLS];
     int mouseX_;
+    int currentTurn_;
 
     void initializeBoard(void);
     void drawBoard(void);
     void drawNextPiece(void);
     int getColFromPos(int xPos);
+    bool isValidCol(int col);
+    bool isInScreen(int x, int y);
 
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
     void mousePressEvent(QGraphicsSceneMouseEvent *event);

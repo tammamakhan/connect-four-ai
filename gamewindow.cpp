@@ -10,7 +10,7 @@ GameWindow::GameWindow(QWidget *parent) : QMainWindow(parent),
 
     timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(slotTimer()));
-    timer->start(100);
+    timer->start(1);
 
 }
 
@@ -20,6 +20,6 @@ GameWindow::~GameWindow() {
 
 void GameWindow::slotTimer() {
     scene->updateBoard();
-    qDebug() << "Updated...";
+    //qDebug() << "Updated";
 }
 
