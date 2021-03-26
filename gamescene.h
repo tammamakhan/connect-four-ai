@@ -10,7 +10,7 @@
 
 #define EMPTY   0
 #define PLAYER  1
-#define ENEMY   2
+#define AI   2
 
 #define RADIUS  100
 
@@ -30,7 +30,9 @@ private:
     void drawNextPiece(void);
     int getColFromPos(int xPos);
     bool isValidCol(int col);
+    int getValidRow(int col);
     bool isInScreen(int x, int y);
+    int makeAIMove(void);
 
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
     void mousePressEvent(QGraphicsSceneMouseEvent *event);

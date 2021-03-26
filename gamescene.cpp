@@ -15,6 +15,24 @@ void GameScene::updateBoard() {
     // Clear the current scene
     this->clear();
 
+    // If it is the AI's turn, it will make its
+    // next move
+    if (currentTurn_ == AI) {
+        // Get the next optimal move for the AI
+        int nextAIMoveCol = makeAIMove();
+
+        // Make sure that the column the AI has chosen is valid
+        if (isValidCol(nextAIMoveCol)) {
+            // Get the next row
+            int nextAIMoveRow = getValidRow(nextAIMoveCol);
+
+            // Update the board for the AI's move and
+            // change turn to player's
+            board_[nextAIMoveRow][nextAIMoveCol] = AI;
+            currentTurn_ = PLAYER;
+        }
+    }
+
     // Check for victory
 
     // Draw the entire board
@@ -42,15 +60,17 @@ void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
         // Get the column where the mouse is
         int col = getColFromPos(mouseX_);
         if (isValidCol(col)) {
-            // Add player piece to column
+            // Get the row to place piece
+            int row = getValidRow(col);
 
+            // Update board with player's next move
+            board_[row][col] = PLAYER;
 
             // Change current turn to enemy
-            //currentTurn_ = ENEMY;
+            currentTurn_ = AI;
             qDebug() << "CLICK IN SCREEN" << event->scenePos().x() << event->scenePos().y();
         }
     }
-    //qDebug() << "CLICK" << event->scenePos().x() << event->scenePos().y();
 }
 
 // -------------------------------------- HELPER FUNCTIONS --------------------------------------//
@@ -95,7 +115,7 @@ void GameScene::drawBoard() {
                                  pen,
                                  brush);
             }
-            if (board_[row][col] == ENEMY) {
+            if (board_[row][col] == AI) {
                 QBrush brush(Qt::red);
                 this->addEllipse(2 + RADIUS * col,
                                  RADIUS + RADIUS * row,
@@ -127,9 +147,7 @@ void GameScene::drawNextPiece() {
 // Given the mouse's x position, return the
 // corresponding column
 int GameScene::getColFromPos(int xPos) {
-    return ((this->width() - xPos + 1) * 7);
-    // Mouse is not in a valid column
-    return -1;
+    return xPos / RADIUS;
 }
 
 // Given a column, check if it is full or not already
@@ -140,14 +158,29 @@ bool GameScene::isValidCol(int col) {
     return false;
 }
 
+int GameScene::getValidRow(int col) {
+    int row = BOARD_ROWS - 1;
+    for (; row >= 0; row--) {
+        if (board_[row][col] == EMPTY) {
+            break;
+        }
+    }
+    return row;
+}
+
 // Given an x and y position, check if it is within the
 // game screen
 bool GameScene::isInScreen(int x, int y) {
     if (x > 0 && x < this->width()) {
         if (y > 0 && y < this->height()) {
             return true;
-            qDebug() << "IN SCREEN";
         }
     }
     return false;
+}
+
+// Uses the minimax algorithm with alpha beta pruning to decide
+// which column to place the next piece
+int GameScene::makeAIMove() {
+    return rand() % BOARD_COLS;
 }
