@@ -9,40 +9,50 @@ GameScene::GameScene() {
     // Initialize member variables
     mouseX_ = 5 + RADIUS / 2;
     currentTurn_ = PLAYER;
+    gameInProgress_ = true;
 }
 
 void GameScene::updateBoard() {
-    // Clear the current scene
-    this->clear();
+    // Continue game
+    if (gameInProgress_) {
+        // Clear the current scene
+        this->clear();
 
-    // If it is the AI's turn, it will make its
-    // next move
-    if (currentTurn_ == AI) {
-        // Get the next optimal move for the AI
-        int nextAIMoveCol = makeAIMove();
+        // If it is the AI's turn, it will make its
+        // next move
+        if (currentTurn_ == AI) {
+            // Get the next optimal move for the AI
+            int nextAIMoveCol = makeAIMove();
 
-        // Make sure that the column the AI has chosen is valid
-        if (isValidCol(nextAIMoveCol)) {
-            // Get the next row
-            int nextAIMoveRow = getValidRow(nextAIMoveCol);
+            // Make sure that the column the AI has chosen is valid
+            if (isValidCol(nextAIMoveCol)) {
+                // Get the next row
+                int nextAIMoveRow = getValidRow(nextAIMoveCol);
 
-            // Update the board for the AI's move and
-            // change turn to player's
-            board_[nextAIMoveRow][nextAIMoveCol] = AI;
-            currentTurn_ = PLAYER;
+                // Update the board for the AI's move and
+                // change turn to player's
+                board_[nextAIMoveRow][nextAIMoveCol] = AI;
+
+                // Check for AI win
+                if (checkForWin(AI)) {
+                    gameInProgress_ = false;
+                    drawBoard();
+                    qDebug() << "You lose!";
+                } else {
+                    currentTurn_ = PLAYER;
+                }
+            }
         }
+
+        // Draw the entire board
+        drawBoard();
+        drawNextPiece();
     }
-
-    // Check for victory
-
-    // Draw the entire board
-    drawBoard();
-    drawNextPiece();
 }
 
 // Update the stored x position of the mouse
 void GameScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
-    if (currentTurn_ == PLAYER) {
+    if (currentTurn_ == PLAYER && gameInProgress_) {
         mouseX_ = event->scenePos().x();
 
         if (mouseX_ - RADIUS / 2 < 2) {
@@ -56,7 +66,7 @@ void GameScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 
 // Make the player's move if it is their turn
 void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
-    if (currentTurn_ == PLAYER && isInScreen(event->scenePos().x(), event->scenePos().y())) {
+    if (currentTurn_ == PLAYER && isInScreen(event->scenePos().x(), event->scenePos().y()) && gameInProgress_) {
         // Get the column where the mouse is
         int col = getColFromPos(mouseX_);
         if (isValidCol(col)) {
@@ -66,9 +76,14 @@ void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
             // Update board with player's next move
             board_[row][col] = PLAYER;
 
-            // Change current turn to enemy
-            currentTurn_ = AI;
-            qDebug() << "CLICK IN SCREEN" << event->scenePos().x() << event->scenePos().y();
+            // Check for player victory
+            if (checkForWin(PLAYER)) {
+                gameInProgress_ = false;
+                drawBoard();
+                qDebug() << "You win!";
+            } else {
+                currentTurn_ = AI;
+            }
         }
     }
 }
@@ -124,7 +139,6 @@ void GameScene::drawBoard() {
                                  pen,
                                  brush);
             }
-
         }
     }
 }
@@ -183,4 +197,46 @@ bool GameScene::isInScreen(int x, int y) {
 // which column to place the next piece
 int GameScene::makeAIMove() {
     return rand() % BOARD_COLS;
+}
+
+bool GameScene::checkForWin(int player) {
+    // Check horizontally for wins
+    for (int row = 0; row < BOARD_ROWS; row++) {
+        for (int col = 0; col < BOARD_COLS - 3; col++) {
+            if (board_[row][col] == player && board_[row][col+1] == player &&
+                board_[row][col+2] == player && board_[row][col+3] == player) {
+                return true;
+            }
+        }
+    }
+
+    // Check vertically for wins
+    for (int row = 0; row < BOARD_ROWS - 3; row++) {
+        for (int col = 0; col < BOARD_COLS; col++) {
+            if (board_[row][col] == player && board_[row+1][col] == player &&
+                board_[row+2][col] == player && board_[row+3][col] == player) {
+                return true;
+            }
+        }
+    }
+    // Check right diaganols
+    for (int row = 0; row < BOARD_ROWS - 3; row++) {
+        for (int col = 0; col < BOARD_COLS - 3; col++) {
+            if (board_[row][col] == player && board_[row+1][col+1] == player &&
+                board_[row+2][col+2] == player && board_[row+3][col+3] == player) {
+                return true;
+            }
+        }
+    }
+    // Check left diagonals
+    for (int row = 3; row < BOARD_ROWS; row++) {
+        for (int col = 0; col < BOARD_COLS - 3; col++) {
+            if (board_[row][col] == player && board_[row-1][col+1] == player &&
+                board_[row-2][col+2] == player && board_[row-3][col+3] == player) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
