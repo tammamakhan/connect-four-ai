@@ -3,56 +3,54 @@
 #include <QDebug>
 
 GameScene::GameScene() {
-    // Create empty board when game is initialized
-    initializeBoard();
+    // Initialize the game board
+    game.initializeBoard();
 
     // Initialize member variables
     mouseX_ = 5 + RADIUS / 2;
-    currentTurn_ = PLAYER;
-    gameInProgress_ = true;
 }
 
 void GameScene::updateBoard() {
-    // Continue game
-    if (gameInProgress_) {
-        // Clear the current scene
+    // Update the game if it is still in progress
+    if (game.inProgress_) {
+        // Clear the game scene for the current game state
         this->clear();
 
-        // If it is the AI's turn, it will make its
-        // next move
-        if (currentTurn_ == AI) {
-            // Get the next optimal move for the AI
-            int nextAIMoveCol = makeAIMove();
+        // Check if it is the AI's turn, and if so
+        // let it make its move
+        if (game.currentTurn_ == AI_PLAYER) {
+            int aiMoveCol = game.ai.getNextMove();
+            game.placePiece(AI_PLAYER, aiMoveCol);
 
-            // Make sure that the column the AI has chosen is valid
-            if (isValidCol(nextAIMoveCol)) {
-                // Get the next row
-                int nextAIMoveRow = getValidRow(nextAIMoveCol);
-
-                // Update the board for the AI's move and
-                // change turn to player's
-                board_[nextAIMoveRow][nextAIMoveCol] = AI;
-
-                // Check for AI win
-                if (checkForWin(AI)) {
-                    gameInProgress_ = false;
-                    drawBoard();
-                    qDebug() << "You lose!";
-                } else {
-                    currentTurn_ = PLAYER;
-                }
+            // Check
+            if (game.checkForWin(AI_PLAYER)) {
+                game.inProgress_ = false;
+                drawBoard();
+                qDebug() << "You Lose!";
+            } else {
+                game.currentTurn_ = PLAYER;
             }
         }
 
-        // Draw the entire board
+        // Draw the game scene for the new board state
         drawBoard();
-        drawNextPiece();
+
+        // Check if it is the player's turn, and if so, display the
+        // next game piece for them to place
+        // This game piece will follow the mouse and upon clicking in
+        // the game scene, will place the player's piece in that column
+        // Mouse event handling can be seen below
+        if (game.currentTurn_ == PLAYER) {
+            drawNextPiece();
+        }
     }
 }
 
-// Update the stored x position of the mouse
+/*
+ *
+*/
 void GameScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
-    if (currentTurn_ == PLAYER && gameInProgress_) {
+    if (game.currentTurn_ == PLAYER && game.inProgress_) {
         mouseX_ = event->scenePos().x();
 
         if (mouseX_ - RADIUS / 2 < 2) {
@@ -64,43 +62,37 @@ void GameScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
     }
 }
 
-// Make the player's move if it is their turn
+/*
+ *
+*/
 void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
-    if (currentTurn_ == PLAYER && isInScreen(event->scenePos().x(), event->scenePos().y()) && gameInProgress_) {
-        // Get the column where the mouse is
-        int col = getColFromPos(mouseX_);
-        if (isValidCol(col)) {
-            // Get the row to place piece
-            int row = getValidRow(col);
+    // First check that the game is in progress and it is the player's
+    // turn
+    if (game.currentTurn_ == PLAYER && game.inProgress_) {
+        // Make sure the click occured in the game scene
+        if (isInScreen(event->scenePos().x(), event->scenePos().y())) {
+            int col = getColFromPos((mouseX_));
+            game.placePiece(PLAYER, col);
 
-            // Update board with player's next move
-            board_[row][col] = PLAYER;
-
-            // Check for player victory
-            if (checkForWin(PLAYER)) {
-                gameInProgress_ = false;
+            // Check if this is a winning move
+            // If it is, we can end the game
+            // Otherwise, it will now become the AI's turn
+            if (game.checkForWin(PLAYER)) {
+                game.inProgress_ = false;
                 drawBoard();
                 qDebug() << "You win!";
             } else {
-                currentTurn_ = AI;
+                game.currentTurn_ = AI_PLAYER;
             }
         }
     }
 }
 
-// -------------------------------------- HELPER FUNCTIONS --------------------------------------//
 
-// Initialize the board 2d array with all EMPTY cells
-void GameScene::initializeBoard() {
-    for (int row = 0; row < BOARD_ROWS; row++) {
-        for (int col = 0; col < BOARD_COLS; col++) {
-            board_[row][col] = EMPTY;
-        }
-    }
-}
-
-// Draw the game board and corresponding game pieces
-// for the current state of the board
+/*
+ * Draw the connect four game for the current state of
+ * the board
+*/
 void GameScene::drawBoard() {
     // Draw the background board
     QPen backgroundPen(Qt::blue);
@@ -112,7 +104,7 @@ void GameScene::drawBoard() {
         for (int col = 0; col < BOARD_COLS; col++) {
             // Set the brush color and fill each cell/piece accordingly
             QPen pen(Qt::black);
-            if (board_[row][col] == EMPTY) {
+            if (game.board_[row][col] == EMPTY) {
                 QBrush brush(Qt::black);
                 this->addEllipse(2 + RADIUS * col,
                                  RADIUS + RADIUS * row,
@@ -121,7 +113,7 @@ void GameScene::drawBoard() {
                                  pen,
                                  brush);
             }
-            if (board_[row][col] == PLAYER) {
+            if (game.board_[row][col] == PLAYER) {
                 QBrush brush(Qt::yellow);
                 this->addEllipse(2 + RADIUS * col,
                                  RADIUS + RADIUS * row,
@@ -130,7 +122,7 @@ void GameScene::drawBoard() {
                                  pen,
                                  brush);
             }
-            if (board_[row][col] == AI) {
+            if (game.board_[row][col] == AI_PLAYER) {
                 QBrush brush(Qt::red);
                 this->addEllipse(2 + RADIUS * col,
                                  RADIUS + RADIUS * row,
@@ -146,44 +138,31 @@ void GameScene::drawBoard() {
 // Draw the next piece that follows the mouse if it is
 // the player's turn
 void GameScene::drawNextPiece() {
-    if (currentTurn_ == PLAYER) {
-        QBrush brush(Qt::yellow);
-        QPen pen(Qt::yellow);
-        this->addEllipse(mouseX_ - RADIUS / 2,
-                         2,
-                         RADIUS - 4,
-                         RADIUS - 4,
-                         pen,
-                         brush);
-    }
+    QBrush brush(Qt::yellow);
+    QPen pen(Qt::yellow);
+    this->addEllipse(mouseX_ - RADIUS / 2,
+                     2,
+                     RADIUS - 4,
+                     RADIUS - 4,
+                     pen,
+                     brush);
 }
 
-// Given the mouse's x position, return the
-// corresponding column
+/*
+ * Input:   x position
+ * Output:  the column in which the inputted x position
+ *          corresponds to on the board
+*/
 int GameScene::getColFromPos(int xPos) {
     return xPos / RADIUS;
 }
 
-// Given a column, check if it is full or not already
-bool GameScene::isValidCol(int col) {
-    if (board_[0][col] == EMPTY) {
-        return true;
-    }
-    return false;
-}
 
-int GameScene::getValidRow(int col) {
-    int row = BOARD_ROWS - 1;
-    for (; row >= 0; row--) {
-        if (board_[row][col] == EMPTY) {
-            break;
-        }
-    }
-    return row;
-}
-
-// Given an x and y position, check if it is within the
-// game screen
+/*
+ * Input:   x and y position
+ * Output:  true if the coordinates (x, y) are inside the screen,
+ *          false otherwise
+*/
 bool GameScene::isInScreen(int x, int y) {
     if (x > 0 && x < this->width()) {
         if (y > 0 && y < this->height()) {
@@ -193,50 +172,3 @@ bool GameScene::isInScreen(int x, int y) {
     return false;
 }
 
-// Uses the minimax algorithm with alpha beta pruning to decide
-// which column to place the next piece
-int GameScene::makeAIMove() {
-    return rand() % BOARD_COLS;
-}
-
-bool GameScene::checkForWin(int player) {
-    // Check horizontally for wins
-    for (int row = 0; row < BOARD_ROWS; row++) {
-        for (int col = 0; col < BOARD_COLS - 3; col++) {
-            if (board_[row][col] == player && board_[row][col+1] == player &&
-                board_[row][col+2] == player && board_[row][col+3] == player) {
-                return true;
-            }
-        }
-    }
-
-    // Check vertically for wins
-    for (int row = 0; row < BOARD_ROWS - 3; row++) {
-        for (int col = 0; col < BOARD_COLS; col++) {
-            if (board_[row][col] == player && board_[row+1][col] == player &&
-                board_[row+2][col] == player && board_[row+3][col] == player) {
-                return true;
-            }
-        }
-    }
-    // Check right diaganols
-    for (int row = 0; row < BOARD_ROWS - 3; row++) {
-        for (int col = 0; col < BOARD_COLS - 3; col++) {
-            if (board_[row][col] == player && board_[row+1][col+1] == player &&
-                board_[row+2][col+2] == player && board_[row+3][col+3] == player) {
-                return true;
-            }
-        }
-    }
-    // Check left diagonals
-    for (int row = 3; row < BOARD_ROWS; row++) {
-        for (int col = 0; col < BOARD_COLS - 3; col++) {
-            if (board_[row][col] == player && board_[row-1][col+1] == player &&
-                board_[row-2][col+2] == player && board_[row-3][col+3] == player) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
