@@ -8,7 +8,6 @@ public:
     Game();
 
     AI ai;
-
     int board_[BOARD_ROWS][BOARD_COLS];
     int currentTurn_;
     bool inProgress_;

@@ -1,7 +1,11 @@
 #include "gamescene.h"
 
 #include <QDebug>
+#include <QGraphicsTextItem>
 
+/*
+ * Constructor for the GameScene class
+*/
 GameScene::GameScene() {
     // Initialize the game board
     game.initializeBoard();
@@ -10,7 +14,14 @@ GameScene::GameScene() {
     mouseX_ = 5 + RADIUS / 2;
 }
 
+/*
+ *
+*/
 void GameScene::updateBoard() {
+    // Check if the board is filled up
+    if (game.isBoardFull()) {
+        qDebug() << "Game Draw!";
+    }
     // Update the game if it is still in progress
     if (game.inProgress_) {
         // Clear the game scene for the current game state
@@ -19,16 +30,20 @@ void GameScene::updateBoard() {
         // Check if it is the AI's turn, and if so
         // let it make its move
         if (game.currentTurn_ == AI_PLAYER) {
-            int aiMoveCol = game.ai.getNextMove();
-            game.placePiece(AI_PLAYER, aiMoveCol);
+            int aiMoveCol = game.ai.getNextMove(game.board_);
+            if (game.isValidCol(aiMoveCol)){
+                game.placePiece(AI_PLAYER, aiMoveCol);
+            }
 
-            // Check
+            // Check for winning move
             if (game.checkForWin(AI_PLAYER)) {
                 game.inProgress_ = false;
                 drawBoard();
                 qDebug() << "You Lose!";
             } else {
-                game.currentTurn_ = PLAYER;
+                if (game.isValidCol(aiMoveCol)) {
+                    game.currentTurn_ = PLAYER;
+                }
             }
         }
 
@@ -71,9 +86,8 @@ void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     if (game.currentTurn_ == PLAYER && game.inProgress_) {
         // Make sure the click occured in the game scene
         if (isInScreen(event->scenePos().x(), event->scenePos().y())) {
-            int col = getColFromPos((mouseX_));
+            int col = getColFromPos(mouseX_);
             game.placePiece(PLAYER, col);
-
             // Check if this is a winning move
             // If it is, we can end the game
             // Otherwise, it will now become the AI's turn
@@ -82,7 +96,9 @@ void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
                 drawBoard();
                 qDebug() << "You win!";
             } else {
-                game.currentTurn_ = AI_PLAYER;
+                if (game.isValidCol(col)) {
+                    game.currentTurn_ = AI_PLAYER;
+                }
             }
         }
     }
@@ -135,8 +151,10 @@ void GameScene::drawBoard() {
     }
 }
 
-// Draw the next piece that follows the mouse if it is
-// the player's turn
+/*
+ * Draw the next piece that follows the mouse if it is
+ * the player's turn
+*/
 void GameScene::drawNextPiece() {
     QBrush brush(Qt::yellow);
     QPen pen(Qt::yellow);

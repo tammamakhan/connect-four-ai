@@ -15,6 +15,7 @@ public:
     GameScene();
 
     Game game;
+
     void updateBoard(void);
 
 private:

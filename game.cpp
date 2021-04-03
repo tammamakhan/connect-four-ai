@@ -71,10 +71,10 @@ int Game::getValidRow(int col) {
 bool Game::isBoardFull(void) {
     for (int col = 0; col < BOARD_COLS; col++) {
         if (board_[0][col] == EMPTY) {
-            return true;
+            return false;
         }
     }
-    return false;
+    return true;
 }
 
 bool Game::checkForWin(int player) {
