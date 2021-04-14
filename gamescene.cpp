@@ -8,7 +8,7 @@
 */
 GameScene::GameScene() {
     // Initialize the game board
-    game.initializeBoard();
+    game_.initializeBoard();
 
     // Initialize member variables
     mouseX_ = 5 + RADIUS / 2;
@@ -19,30 +19,31 @@ GameScene::GameScene() {
 */
 void GameScene::updateBoard() {
     // Check if the board is filled up
-    if (game.isBoardFull()) {
-        qDebug() << "Game Draw!";
+    if (game_.isBoardFull()) {
+        // qDebug() << "Game Draw!";
     }
     // Update the game if it is still in progress
-    if (game.inProgress_) {
+    if (game_.inProgress_) {
         // Clear the game scene for the current game state
         this->clear();
 
         // Check if it is the AI's turn, and if so
         // let it make its move
-        if (game.currentTurn_ == AI_PLAYER) {
-            int aiMoveCol = game.ai.getNextMove(game.board_);
-            if (game.isValidCol(aiMoveCol)){
-                game.placePiece(AI_PLAYER, aiMoveCol);
-            }
+        if (game_.currentTurn_ == AI_PLAYER) {
+            int aiMoveCol = game_.ai.getNextMove(game_.board_);
 
-            // Check for winning move
-            if (game.checkForWin(AI_PLAYER)) {
-                game.inProgress_ = false;
-                drawBoard();
-                qDebug() << "You Lose!";
-            } else {
-                if (game.isValidCol(aiMoveCol)) {
-                    game.currentTurn_ = PLAYER;
+            // Check that this is a valid column
+            if (game_.isValidCol(aiMoveCol)){
+                // Place AI's piece
+                game_.placePiece(AI_PLAYER, aiMoveCol);
+
+                // Check for winning move
+                if (game_.checkForWin(AI_PLAYER)) {
+                    game_.inProgress_ = false;
+                    drawBoard();
+                    // qDebug() << "You Lose!";
+                } else {
+                    game_.currentTurn_ = PLAYER;
                 }
             }
         }
@@ -55,7 +56,7 @@ void GameScene::updateBoard() {
         // This game piece will follow the mouse and upon clicking in
         // the game scene, will place the player's piece in that column
         // Mouse event handling can be seen below
-        if (game.currentTurn_ == PLAYER) {
+        if (game_.currentTurn_ == PLAYER) {
             drawNextPiece();
         }
     }
@@ -65,7 +66,7 @@ void GameScene::updateBoard() {
  *
 */
 void GameScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
-    if (game.currentTurn_ == PLAYER && game.inProgress_) {
+    if (game_.currentTurn_ == PLAYER && game_.inProgress_) {
         mouseX_ = event->scenePos().x();
 
         if (mouseX_ - RADIUS / 2 < 2) {
@@ -83,21 +84,25 @@ void GameScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
 void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     // First check that the game is in progress and it is the player's
     // turn
-    if (game.currentTurn_ == PLAYER && game.inProgress_) {
+    if (game_.currentTurn_ == PLAYER && game_.inProgress_) {
         // Make sure the click occured in the game scene
         if (isInScreen(event->scenePos().x(), event->scenePos().y())) {
             int col = getColFromPos(mouseX_);
-            game.placePiece(PLAYER, col);
-            // Check if this is a winning move
-            // If it is, we can end the game
-            // Otherwise, it will now become the AI's turn
-            if (game.checkForWin(PLAYER)) {
-                game.inProgress_ = false;
-                drawBoard();
-                qDebug() << "You win!";
-            } else {
-                if (game.isValidCol(col)) {
-                    game.currentTurn_ = AI_PLAYER;
+
+            // Check that this is a valid column
+            if (game_.isValidCol(col)) {
+                // Place player's piece
+                game_.placePiece(PLAYER, col);
+
+                // Check if this is a winning move
+                // If it is, we can end the game
+                // Otherwise, it will now become the AI's turn
+                if (game_.checkForWin(PLAYER)) {
+                    game_.inProgress_ = false;
+                    drawBoard();
+                    // qDebug() << "You win!";
+                } else {
+                    game_.currentTurn_ = AI_PLAYER;
                 }
             }
         }
@@ -120,7 +125,7 @@ void GameScene::drawBoard() {
         for (int col = 0; col < BOARD_COLS; col++) {
             // Set the brush color and fill each cell/piece accordingly
             QPen pen(Qt::black);
-            if (game.board_[row][col] == EMPTY) {
+            if (game_.board_[row][col] == EMPTY) {
                 QBrush brush(Qt::black);
                 this->addEllipse(2 + RADIUS * col,
                                  RADIUS + RADIUS * row,
@@ -129,7 +134,7 @@ void GameScene::drawBoard() {
                                  pen,
                                  brush);
             }
-            if (game.board_[row][col] == PLAYER) {
+            if (game_.board_[row][col] == PLAYER) {
                 QBrush brush(Qt::yellow);
                 this->addEllipse(2 + RADIUS * col,
                                  RADIUS + RADIUS * row,
@@ -138,7 +143,7 @@ void GameScene::drawBoard() {
                                  pen,
                                  brush);
             }
-            if (game.board_[row][col] == AI_PLAYER) {
+            if (game_.board_[row][col] == AI_PLAYER) {
                 QBrush brush(Qt::red);
                 this->addEllipse(2 + RADIUS * col,
                                  RADIUS + RADIUS * row,

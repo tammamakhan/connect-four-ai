@@ -10,11 +10,11 @@
 #define RADIUS  100
 
 
-class GameScene : public QGraphicsScene{
+class GameScene : public QGraphicsScene {
 public:
     GameScene();
 
-    Game game;
+    Game game_;
 
     void updateBoard(void);
 
